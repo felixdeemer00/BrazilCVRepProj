@@ -1,0 +1,185 @@
+---
+title: "BrazilCVRepProj"
+author: "Felix Deemer"
+date: "5/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm)
+library(readr)
+library(tidyverse)
+library(mgcv)
+library(lubridate)
+library(plyr)
+library(dplyr)
+```
+
+```{r Loading.RDataFile}
+
+# The .RData file below consists of several datasets. The cadastro datasets 
+# describe the results of a Brazilian national survey, while the svy_data set
+# is the dataset created by the researchers, summarizing knowledge regarding
+# access to state services affected by voting punishments.
+
+load(file = "cepaluni_hidalgo.RData")
+
+```
+
+```{r StateServiceUsage}
+
+## State service usage graph
+# Creating the graph showing usage of state services, grouping by differing
+# levels of education.
+
+svy_data2 <- svy_data %>%
+  group_by(edu_cat) %>%
+  dplyr::summarize(mean = mean(num_state_services),
+            lower = t.test(num_state_services)$conf.int[1],
+            upper = t.test(num_state_services)$conf.int[2])
+
+ggplot(data = svy_data2,
+       mapping = aes(mean, edu_cat)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = lower, xmax = upper), width = 0) +
+  theme_bw() +
+  labs(y = "Education",
+       x = "Mean Number of State Services Used")
+
+```
+
+```{r UnregisteredVoterEstimate}
+
+## Cleaning the Data
+# Dropping residents of Federal district
+
+cadastro42 <- filter(cadastro42, uf != "DF")
+cadastro92 <- filter(cadastro92, uf != "DF")
+cadastro94 <- filter(cadastro94, uf != "DF")
+pnad0513_1942 <- filter(pnad0513_1942, uf != "DF")
+pnad0513_1994 <- filter(pnad0513_1994, uf != "DF")
+
+# Adding a weekday variable, used later in the estimate model
+
+cadastro42$weekday <- factor(wday(cadastro42$bdate, label = TRUE), ordered = FALSE)
+cadastro42$weekday <- revalue(cadastro42$weekday, c("Thu"="Thurs", "Tue"="Tues"))
+
+cadastro92$weekday <- factor(wday(cadastro92$bdate, label = TRUE), ordered = FALSE)
+cadastro92$weekday <- revalue(cadastro92$weekday, c("Thu"="Thurs", "Tue"="Tues"))
+
+cadastro94$weekday <- factor(wday(cadastro94$bdate, label = TRUE), ordered = FALSE)
+cadastro94$weekday <- revalue(cadastro94$weekday, c("Thu"="Thurs", "Tue"="Tues"))
+
+# Converting Gender, Marital Status and Education to 0/1 variables. Education 
+# includes both a primary and secondary completion education variable.
+
+cadastro42 <- mutate(cadastro42, 
+                     primary_edu = ifelse(education %in% c("Analfabeto", 
+                        "Ensino Fundamental Incompeto", "Le e Escreve"), 0, 1),
+                     secondary_edu = ifelse(education %in% 
+                        c("Ensino Medio Completo", "Superior Completo", 
+                        "Superior Incompleto"), 1, 0),
+                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     married = ifelse(marital_status == "Casado", 1, 0))
+                    
+cadastro92 <- mutate(cadastro92, 
+                     primary_edu = ifelse(education %in% c("Analfabeto", 
+                        "Ensino Fundamental Incompeto", "Le e Escreve"), 0, 1),
+                     secondary_edu = ifelse(education %in% 
+                        c("Ensino Medio Completo", "Superior Completo", 
+                        "Superior Incompleto"), 1, 0),
+                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     married = ifelse(marital_status == "Casado", 1, 0))
+
+cadastro94 <- mutate(cadastro94, 
+                     primary_edu = ifelse(education %in% c("Analfabeto", 
+                        "Ensino Fundamental Incompeto", "Le e Escreve"), 0, 1),
+                     secondary_edu = ifelse(education %in% 
+                        c("Ensino Medio Completo", "Superior Completo", 
+                        "Superior Incompleto"), 1, 0),
+                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     married = ifelse(marital_status == "Casado", 1, 0))
+
+## Estimating voter registration shortfall
+# This function estimates the number of people born each day, according to the
+# day of the week.
+
+est_pop <- function(pnad, cadastro){
+  
+  consolidated_pnad <- dplyr::summarize(group_by(pnad, fv), 
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 ppl = sum(sample_weight) / 
+                                             length(unique(year)))
+  
+  pop_fit <- gam(ppl ~ weekday + s(fv), data = consolidated_pnad)
+  
+  consolidated_cadastro <- dplyr::summarize(group_by(cadastro, fv), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = sum(turnout),
+                                 registered = n())
+
+  consolidated_cadastro$total_est <- round(predict(pop_fit, newdata = consolidated_cadastro))
+  return(consolidated_cadastro)
+  
+  }
+```
+
+```{r FVDiscontinuityGraph}
+## Recreating the graph visually demonstrating the discontinuity on either side
+## of the model.
+# Creating the data for graphing the cohorts.
+
+demo_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = sum(turnout),
+                                 registered = n(),
+                                 .groups = "drop") %>%
+  filter(abs(fv) <= 100) %>%
+  mutate(pct_turnout = turnout/registered,
+         bin5 = round(demo_cadastro$fv/5)*5)
+
+demo_cadastro_bin5 <- dplyr::summarize(group_by(demo_cadastro, bin5, primary_edu),
+                                 turnout = sum(turnout),
+                                 registered = sum(registered),
+                                 .groups = "drop") %>%
+  mutate(fv = bin5,
+         pct_turnout = turnout / registered)
+
+cadas_cadas_edu_loess <- loess(pct_turnout ~ fv, data = filter(demo_cadastro,
+                                                         primary_edu == 1))
+cadas_unedu_loess <- loess(pct_turnout ~ fv, data = filter(demo_cadastro,
+                                                         primary_edu == 0))
+
+demo_cadastro_loess <- data.frame(edu1 = cadas_edu_loess$fitted, 
+                                  edu0 = cadas_unedu_loess$fitted) %>%
+  mutate(fv = seq.int(nrow(demo_cadastro_loess))) %>%
+  pivot_longer(cols = c(edu1, edu0), names_to = "primary_edu") %>%
+  mutate(pct_turnout = value)
+demo_cadastro_loess$primary_edu <- ifelse(demo_cadastro_loess$primary_edu == "edu1", 1, 0)
+
+ggplot(demo_cadastro, aes(fv, pct_turnout)) +
+  geom_point(alpha = 0.2) +
+  geom_point(data = demo_cadastro_bin5) +
+  geom_smooth(data = filter(demo_cadastro, fv > 0), method = "loess", 
+              se = FALSE, span = 1.5, lwd = 1.5, col = "darkgreen") +
+  geom_smooth(data = filter(demo_cadastro, fv < 0), method = "loess", 
+              se = FALSE, span = 1.5, lwd = 1.5, col = "red") +
+  facet_wrap(~ primary_edu)
+  
+```
+
+```{r 69-70CVStatus}
+
+
+
+```
+
+```{r 17-18CVStatus}
+
+
+
+```
+
