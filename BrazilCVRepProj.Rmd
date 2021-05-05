@@ -330,19 +330,19 @@ before it is no longer entirely indicative of the trends you wish to capture?
 In this case, the paper's data only contained information for individuals with 
 birthdays up to a year away from the election. 
 
-I then attempted to decide what bandwidth to use by analyzing how the final
-estimate of the CV causal effect varied by bandwidth for each group. I created
-a function to calculate and return the estimate of the CV causal effect, as well
-as the 95% confidence interval (calculated using the standard errors of the 
-intercept coefficients from the individual models). I then plotted a graph 
-showing how the estimated effect changes as the bandwidth increases, for every 
-bandwidth between 15 days and 365 days. These results are shown in the graph 
-below, with the solid line showing the point estimate and the dashed lines 
-showing the 95% confidence interval.
+To decide what bandwidth to use, I analyzed how the final estimate of the CV 
+causal effect varied by bandwidth for each group. I created a function to 
+calculate and return the estimate of the CV causal effect, as well as the 95% 
+confidence interval (calculated using the standard errors of the intercept 
+coefficients from the individual models). I then plotted a graph showing how the 
+estimated effect changes as the bandwidth increases, for every bandwidth between 
+15 days and 365 days. These results are shown in the graph below, with the solid 
+line showing the point estimate and the dashed lines showing the 95% confidence 
+interval.
 
 Several trends are worth noticing. Firstly, as the bandwidth increases, the 
 confidence interval becomes smaller, indicating a rise in certainty as more
-data points are being fed into the linear models. 
+data points are being used in creating the linear models. 
 
 Secondly, the difference in estimated CV effect between more educated and less 
 educated individuals is far more pronounced at lower bandwidth levels. This 
@@ -355,7 +355,7 @@ limited to the jump at the threshold, on the other hand.
 
 ```{r Bandwidth Chart}
 
-coef_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
+coef_cadastro42 <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
                                  treat = unique(treat),
                                  weekday = factor(unique(weekday), ordered = FALSE),
                                  turnout = mean(turnout),
@@ -383,11 +383,11 @@ coef_fill <- function(educvals, educ, num, coefcadastro){
   
 }
 
-coefs_full <- coef_fill(c(1,0), "Full Sample", 0, coef_cadastro)
+coefs_full <- coef_fill(c(1,0), "Full Sample", 0, coef_cadastro42)
 
-coefs_uneduc <- coef_fill(0, "Less than Primary Education", 0, coef_cadastro)
+coefs_uneduc <- coef_fill(0, "Less than Primary Education", 0, coef_cadastro42)
 
-coefs_educ <- coef_fill(1, "Primary Education or More", 0, coef_cadastro)
+coefs_educ <- coef_fill(1, "Primary Education or More", 0, coef_cadastro42)
 
 coefs_comb <- rbind(coefs_full, coefs_uneduc, coefs_educ) %>%
   mutate(diff = posint-negint,
@@ -413,11 +413,19 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ### Estimated CV Effect (Age 69-70 Group)
 
+For the final coefficient, I decided to use a bandwidth of 300 days, as the 
+values appeared to stabilize at around that point, indicating that this is the
+point at which the threshold ceases to have an effect. The authors of the 
+original study used an algorithm to select a different bandwidth for each group
+being investigated, so their final coefficients differed from mine.
+
 [Explanation of Final 69-70 Coefficient]
 
 ```{r 69-70CVCoef Educ}
 
-
+coef_6970_full <- coefcalc(coef_cadastro42, 300, c(0,1))
+coef_6970_educ <- coefcalc(coef_cadastro42, 300, 1)
+coef_6970_uneduc <- coefcalc(coef_cadastro42, 300, 0)
 
 ```
 
