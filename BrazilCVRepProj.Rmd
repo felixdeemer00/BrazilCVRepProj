@@ -119,7 +119,7 @@ ggplot(data = svy_data2,
   geom_errorbar(aes(xmin = lower, xmax = upper), width = 0, col = "darkblue",
                 lwd = 1) +
   geom_point(size = 3) +
-  theme_get() +
+  theme_bw() +
   labs(y = "Education",
        x = "Mean Number of State Services Used")
 
@@ -219,7 +219,7 @@ when the forcing variable crosses the threshold (the black dashed line, at fv =
 The key trend to observe here, however, is that while CV increases turnout 
 for both the less educated and more educated groups, the effect is much greater
 for the more educated group. Although both groups start off with a turnout of 
-around 80%, the impact of CV makes highly educated turnout visibly higher than
+around 80%, the impact of CV makes more educated turnout visibly higher than
 less educated group turnout. 
 
 The black dots indicate the average turnout within bins of 5 days, while the
@@ -259,6 +259,7 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
               method = "loess", se = FALSE, span = 2, lwd = 2, col = "red") +
   geom_vline(xintercept = 0, lty = "dashed") +
+  theme_bw() +
   labs(title = "The Impact of Compulsory Voting on Turnout by Education",
        subtitle = " ",
        x = "Proximity of Birthday to Election Date (Forcing Variable)",
@@ -290,6 +291,7 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
               method = "lm", se = FALSE, span = 2, lwd = 2, col = "red") +
   geom_vline(xintercept = 0, lty = "dashed") +
+  theme_bw() +
   labs(title = "The Impact of Compulsory Voting on Turnout by Education",
        subtitle = " ",
        x = "Proximity of Birthday to Election Date (Forcing Variable)",
@@ -400,6 +402,7 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
   geom_smooth(mapping = aes(y = min, x = Bandwidth),
               formula = y ~ x, method = "loess", se = FALSE, lwd = 0.5, 
               span = 0.2, color = "black", lty = "dashed") +
+  theme_bw() +
   facet_wrap(~ educ) +
   scale_y_continuous(breaks = c(-0.025, 0, 0.025, 0.05, 0.075), 
                      limits = c(-0.025, 0.08)) +
@@ -410,13 +413,24 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ### Estimated CV Effect (Age 69-70 Group)
 
-For the final coefficient, I decided to use a bandwidth of 300 days, as the 
-values appeared to stabilize at around that point, indicating that this is the
-point at which the threshold ceases to have an effect. The authors of the 
-original study used an algorithm to select a different bandwidth for each group
-being investigated, so their final coefficients differed from mine.
+For the final coefficient, shown in Table 1, I decided to use a bandwidth of 
+300 days, as the values appeared to stabilize at around that point, indicating 
+that this is the point at which the threshold ceases to have an effect. The 
+authors of the original study used an algorithm to select a different bandwidth 
+for each group being investigated, so their final coefficients differed from 
+mine.
 
-[Explanation of Final 69-70 Coefficient]
+The results show the extent to which increases in turnout from Compulsory Voting
+are impacted by education levels. Across the more educated group, of those who
+have completed primary school, the estimate of turnout increase from a policy
+of compulsory voting is about 6.7%. For the less educated group, the estimated
+increase in voter turnout was only about 4.0%, with a difference of about 2.7%
+between more and less educated groups. 
+
+Both of these estimates are statistically significant, with 95% confidence 
+intervals that do not overlap with each other. This therefore seems to present 
+very strong evidence in favor of the authors' claim that Brazil's compulsory
+voting policy in fact increases political inequality.
 
 ```{r 69-70CVCoef Educ}
 
@@ -467,7 +481,8 @@ which I was unable to replicate. As a result, the number of less educated
 individuals was significantly underestimated by my model. This has the result
 that the Estimate value for the Less Educated group is not statistically 
 significant, and the Estimate value for the Full group is disproportionately
-influenced by the More Educated group, so its values are very similar to it.
+influenced by the More Educated group, so their coefficient values are nearly 
+alike.
 
 Therefore, no reliable conclusion can be drawn from this group - this is partly
 due to the fact that the proportion of individuals aged 17-18 who have not 
@@ -524,6 +539,21 @@ final_1718 %>%
 ```
 
 ### Extension: Political Inequality by Sex
+
+To extent the original authors' research slightly, I chose to investigate 
+how compulsory voting affects differences in turnout between men and women. 
+Given the failure to obtain reliable results from the 17-18 age group, I chose
+to only use the 69-70 age group data for this extension. I conducted this 
+analysis in much the same way to the analysis of education to obtain the 
+CV effect estimates shown in Table 3.
+
+As shown below, the estimated effect of the CV policy does appear to differ by 
+sex. This difference is less dramatic than for education, but is further 
+evidence that Brazil's approach to compulsory voting has a tendency to backfire,
+increasing political inequality. The estimated effect on turnout for males is
+an increase of 6.6%, while for females it is only 4.9%. The 95% confidence
+ranges for these values do not overlap, and both are statistically significant,
+indicating that these results are quite reliable. 
 
 ```{r 69-70CVCoef Sex}
 
@@ -584,6 +614,25 @@ final_6970_sex %>%
   kable_styling(latex_options = "hold_position")
 
 ```
+
+### Conclusion
+
+Overall, despite not obtaining the same regression results as the authors, due
+to a taking a different methodological approach, I was able to replicate the
+broad findings of the paper - that the effect of compulsory voting policies 
+varies between groups by education level (and, in the extension, by sex as well.)
+
+The key limitations on the part of my replication was the failure to replicate
+the unregistered voter imputation model used, although this only affected part
+of the analysis. A future direction for exploration on my part would be to try 
+and model the number of unregistered voters, and to analyze changes in the
+effect of CV by education on a more detailed level (instead of only using 
+primary school completion, perhaps using college or high school information as
+well, or by investigating interactions with other factors).
+
+A huge thanks to the original authors of the paper, Gabriel Cepaluni and F. 
+Daniel Hidalgo, for making their paper and data available online! The original
+data and code used for their paper can be found at https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/N2I9LC
 
 ### Bibliography
 
