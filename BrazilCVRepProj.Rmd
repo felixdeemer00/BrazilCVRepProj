@@ -99,7 +99,7 @@ Do you present the results well using tables and figures?
 Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
 (statistically and/or substantively) of the figures and tables?
 
-#### State Service Usage
+### State Service Usage
 
 The research question originally carried out by Cepaluni and Hidalgo was largely
 based on the finding
@@ -126,6 +126,8 @@ ggplot(data = svy_data2,
        x = "Mean Number of State Services Used")
 
 ```
+
+### Data Cleaning
 
 ```{r DataCleaning}
 
@@ -181,6 +183,8 @@ cadastro94 <- mutate(cadastro94,
 
 ```
 
+### Discontinuity Graph
+
 Do you walk us through the analysis you did for the replication?
 
 Do you present the results well using tables and figures?
@@ -226,7 +230,11 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   annotate("text", x = 50, y = 0.89, label = "CV", col = "darkgreen", size = 5) +
   annotate("text", x = -50, y = 0.825, label = "No CV", col = "red", size = 5) +
   facet_wrap(~ primary_edu)
-  
+```
+
+### Discontinuity Model
+
+```{r ModelExplanation}
 ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_point(alpha = 0.2) +
   geom_point(data = demo_cadastro_bin5) +
@@ -269,6 +277,8 @@ coefcalc <- function(concadastro, bw, educ){
 }
 
 ```
+
+### Bandwidth Selection and Graph
 
 Do you walk us through the analysis you did for the replication?
 
@@ -334,8 +344,15 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ```
 
+### Estimated CV Effect (Age 69-70 Group)
 
-#### Unregistered Voter Estimate
+```{r 69-70CVCoef Educ}
+
+
+
+```
+
+### Unregistered Voter Estimate
 
 Do you walk us through the analysis you did for the replication?
 
@@ -370,21 +387,15 @@ est_pop <- function(pnad, cadastro){
   }
 ```
 
-
-Do you discuss what aspects of the paper you were able to replicate and which
-parts, if any, you were not able to replicate?
-
-```{r 69-70CVCoef Educ}
-
-
-
-```
+### Estimated CV Effect (Age 17-18 Group)
 
 ```{r 17-18CVCoef Educ}
 
 
 
 ```
+
+### Extension: Political Inequality by Sex
 
 ```{r 69-70CVCoef Sex}
 
