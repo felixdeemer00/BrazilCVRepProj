@@ -276,7 +276,13 @@ Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results
 
 For the model I fitted, I used a method closer to that demonstrated by the graph
 below. For the data on either side of the threshold, I fitted a separate linear
-regression model, 
+regression model, of turnout regressed on the forcing variable. For this model,
+the intercept reflects the predicted value of turnout when the forcing variable
+equals 0 (at the threshold). These are the points at which the lines below 
+cross the dashed line. By calculating the difference between the two predicted
+values, one from the regression on the treated group, and one from the 
+untreated group, one can obtain an estimate of the causal effect of CV on 
+turnout.
 
 ```{r ModelExplanation}
 
@@ -318,11 +324,34 @@ coefcalc <- function(concadastro, bw, educ){
 
 ### Bandwidth Selection and Graph
 
-Do you walk us through the analysis you did for the replication?
+When performing an RD analysis, however, another decision that must be made is
+that of bandwidth. How far away from the threshold do you look, data-wise, 
+before it is no longer entirely indicative of the trends you wish to capture?
+In this case, the paper's data only contained information for individuals with 
+birthdays up to a year away from the election. 
 
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
+I then attempted to decide what bandwidth to use by analyzing how the final
+estimate of the CV causal effect varied by bandwidth for each group. I created
+a function to calculate and return the estimate of the CV causal effect, as well
+as the 95% confidence interval (calculated using the standard errors of the 
+intercept coefficients from the individual models). I then plotted a graph 
+showing how the estimated effect changes as the bandwidth increases, for every 
+bandwidth between 15 days and 365 days. These results are shown in the graph 
+below, with the solid line showing the point estimate and the dashed lines 
+showing the 95% confidence interval.
+
+Several trends are worth noticing. Firstly, as the bandwidth increases, the 
+confidence interval becomes smaller, indicating a rise in certainty as more
+data points are being fed into the linear models. 
+
+Secondly, the difference in estimated CV effect between more educated and less 
+educated individuals is far more pronounced at lower bandwidth levels. This 
+indicates that the CV effect exerts itself further away from the threshold for 
+less educated groups than for more educated ones - that is, less educated 
+individuals whose birthday falls close to the threshold experience are more 
+likely to turn out to vote than otherwise, even if they are not required to by 
+the policy. The change in turnout for more educated individuals is much more 
+limited to the jump at the threshold, on the other hand.
 
 ```{r Bandwidth Chart}
 
@@ -384,6 +413,8 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ### Estimated CV Effect (Age 69-70 Group)
 
+[Explanation of Final 69-70 Coefficient]
+
 ```{r 69-70CVCoef Educ}
 
 
@@ -392,11 +423,7 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ### Unregistered Voter Estimate
 
-Do you walk us through the analysis you did for the replication?
-
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
+[Explanation of Unregistered Voter Estimate]
 
 ```{r UnregisteredVoterEstimate}
 
@@ -426,6 +453,8 @@ est_pop <- function(pnad, cadastro){
 ```
 
 ### Estimated CV Effect (Age 17-18 Group)
+
+[Explanation of Final 17-18 Coefficient]
 
 ```{r 17-18CVCoef Educ}
 
