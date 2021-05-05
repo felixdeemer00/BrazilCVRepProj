@@ -7,8 +7,12 @@ output:
   pdf_document: default
 ---
 
+# Replication Project - Brazil Compulsory Voting Policy Analysis
+#### Original Paper: Compulsory Voting Can Increase Political Inequality: Evidence from Brazil
+#### By Gabriel Cepaluni and F. Daniel Hidalgo
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(arm)
 library(readr)
 library(tidyverse)
@@ -30,6 +34,24 @@ library(rdd)
 load(file = "cepaluni_hidalgo.RData")
 
 ```
+
+Do you have an introduction that summarizes the original paper and gives an
+overview of your replication:
+a) What question(s) did author(s) ask?  
+b) What analysis did they run?
+c) What did they conclude?
+
+–What did you do in the replication and what can you conclude?  
+What models  did  you  use?   What  did  you  (try  to)  extend?   
+What  are  the implications?
+–Think of your report as a standalone report without requiring the readers
+to be familiar with the original paper.
+
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
 
 ```{r StateServiceUsage}
 
@@ -53,6 +75,12 @@ ggplot(data = svy_data2,
        x = "Mean Number of State Services Used")
 
 ```
+
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
 
 ```{r UnregisteredVoterEstimate}
 
@@ -131,6 +159,12 @@ est_pop <- function(pnad, cadastro){
   }
 ```
 
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
+
 ```{r FVDiscontinuityGraph}
 ## Recreating the graph visually demonstrating the discontinuity on either side
 ## of the model.
@@ -162,6 +196,7 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
               method = "loess", se = FALSE, span = 2, lwd = 2, col = "darkgreen") +
   geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
               method = "loess", se = FALSE, span = 2, lwd = 2, col = "red") +
+  geom_vline(xintercept = 0, lty = "dashed") +
   labs(title = "The Impact of Compulsory Voting on Turnout by Education",
        subtitle = " ",
        x = "Proximity of Birthday to Election Date (Forcing Variable)",
@@ -177,6 +212,7 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
               method = "lm", se = FALSE, span = 2, lwd = 2, col = "darkgreen") +
   geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
               method = "lm", se = FALSE, span = 2, lwd = 2, col = "red") +
+  geom_vline(xintercept = 0, lty = "dashed") +
   labs(title = "The Impact of Compulsory Voting on Turnout by Education",
        subtitle = " ",
        x = "Proximity of Birthday to Election Date (Forcing Variable)",
@@ -186,6 +222,12 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   facet_wrap(~ primary_edu)
 
 ```
+
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
 
 ```{r CoefficientCalculation}
 
@@ -206,7 +248,13 @@ coefcalc <- function(concadastro, bw, educ){
 
 ```
 
-```{r 69-70CVStatus}
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
+
+```{r Bandwidth Chart}
 
 coef_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
                                  treat = unique(treat),
@@ -264,7 +312,16 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ```
 
-```{r 17-18CVStatus}
+Do you discuss what aspects of the paper you were able to replicate and which
+parts, if any, you were not able to replicate?
+
+```{r 69-70CVCoef}
+
+
+
+```
+
+```{r 17-18CVCoef}
 
 
 
