@@ -7,8 +7,8 @@ output:
   pdf_document: default
 ---
 
-# Replication Project - Brazil Compulsory Voting Policy Analysis
-
+# Replication Project - Brazil Compulsory Voting Policy Analysis  
+  
 #### Original Paper: Compulsory Voting Can Increase Political Inequality: Evidence from Brazil
 #### By Gabriel Cepaluni and F. Daniel Hidalgo
 
@@ -36,11 +36,6 @@ load(file = "cepaluni_hidalgo.RData")
 
 ```
 
-Do you have an introduction that summarizes the original paper and gives an
-overview of your replication:
-a) What question(s) did author(s) ask?  
-b) What analysis did they run?
-c) What did they conclude?
 
 –What did you do in the replication and what can you conclude?  
 What models  did  you  use?   What  did  you  (try  to)  extend?   
@@ -48,7 +43,7 @@ What  are  the implications?
 –Think of your report as a standalone report without requiring the readers
 to be familiar with the original paper.
 
-#### Introduction
+### Introduction
 
 The original paper I attempted to replicate is a study of Compulsory Voting (CV) 
 policies in Brazil, determining whether or not these policies achieve their 
@@ -81,14 +76,33 @@ similar in most respects, and that there are not any systematic differences that
 would make a comparison invalid.
 
 To perform this analysis, they ran local linear models on either side of the
-threshold (explained in detail below)
+threshold (explained in detail below), calculating the difference between the 
+two values in order to estimate the causal effect of the CV policy.
 
+They concluded that the effect of the policy was somewhat larger for groups with
+higher levels of education, with this difference being most pronounced between 
+those who had completed at least primary education and those that had not. On
+this basis, they concluded that far from reducing political inequality between
+the educated and uneducated, Compulsory Voting policies in fact increased it.
+
+To replicate their model, I performed a Regression Discontinuity model as well,
+although without the complex system of weighting used by theirs, instead using
+a slightly simpler linear model. Although their data seemed designed to 
+investigate the effect of CV on multiple different groups, so to extent their
+analysis slightly I performed the same analysis based on sex instead of 
+education. This allowed me to determine that the pattern seen in political 
+inequality due to education (did/did not) extend to sex as well.
 
 Do you walk us through the analysis you did for the replication?
 
 Do you present the results well using tables and figures?
 Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
 (statistically and/or substantively) of the figures and tables?
+
+#### State Service Usage
+
+The research question originally carried out by Cepaluni and Hidalgo was largely
+based on the finding
 
 ```{r StateServiceUsage}
 
@@ -113,13 +127,7 @@ ggplot(data = svy_data2,
 
 ```
 
-Do you walk us through the analysis you did for the replication?
-
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
-
-```{r UnregisteredVoterEstimate}
+```{r DataCleaning}
 
 ## Cleaning the Data
 # Dropping residents of Federal district
@@ -171,29 +179,6 @@ cadastro94 <- mutate(cadastro94,
                      woman = ifelse(sexo == "Feminino", 1, 0),
                      married = ifelse(marital_status == "Casado", 1, 0))
 
-## Estimating voter registration shortfall
-# This function estimates the number of people born each day, according to the
-# day of the week.
-
-est_pop <- function(pnad, cadastro){
-  
-  consolidated_pnad <- dplyr::summarize(group_by(pnad, fv), 
-                                 weekday = factor(unique(weekday), ordered = FALSE),
-                                 ppl = sum(sample_weight) / 
-                                             length(unique(year)))
-  
-  pop_fit <- gam(ppl ~ weekday + s(fv), data = consolidated_pnad)
-  
-  consolidated_cadastro <- dplyr::summarize(group_by(cadastro, fv), 
-                                 treat = unique(treat),
-                                 weekday = factor(unique(weekday), ordered = FALSE),
-                                 turnout = sum(turnout),
-                                 registered = n())
-
-  consolidated_cadastro$total_est <- round(predict(pop_fit, newdata = consolidated_cadastro))
-  return(consolidated_cadastro)
-  
-  }
 ```
 
 Do you walk us through the analysis you did for the replication?
@@ -349,18 +334,66 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
 
 ```
 
+
+#### Unregistered Voter Estimate
+
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
+
+```{r UnregisteredVoterEstimate}
+
+## Estimating voter registration shortfall
+# This function estimates the number of people born each day, according to the
+# day of the week.
+
+est_pop <- function(pnad, cadastro){
+  
+  consolidated_pnad <- dplyr::summarize(group_by(pnad, fv), 
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 ppl = sum(sample_weight) / 
+                                             length(unique(year)))
+  
+  pop_fit <- gam(ppl ~ weekday + s(fv), data = consolidated_pnad)
+  
+  consolidated_cadastro <- dplyr::summarize(group_by(cadastro, fv), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = sum(turnout),
+                                 registered = n())
+
+  consolidated_cadastro$total_est <- round(predict(pop_fit, newdata = consolidated_cadastro))
+  return(consolidated_cadastro)
+  
+  }
+```
+
+
 Do you discuss what aspects of the paper you were able to replicate and which
 parts, if any, you were not able to replicate?
 
-```{r 69-70CVCoef}
+```{r 69-70CVCoef Educ}
 
 
 
 ```
 
-```{r 17-18CVCoef}
+```{r 17-18CVCoef Educ}
 
 
 
 ```
 
+```{r 69-70CVCoef Sex}
+
+
+
+```
+
+```{r 17-18CVCoef Sex}
+
+
+
+```
