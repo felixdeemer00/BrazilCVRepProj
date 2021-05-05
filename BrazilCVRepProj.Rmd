@@ -3,8 +3,8 @@ title: "BrazilCVRepProj"
 author: "Felix Deemer"
 date: "5/4/2021"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Replication Project - Brazil Compulsory Voting Policy Analysis  
@@ -129,7 +129,9 @@ ggplot(data = svy_data2,
 
 Three main data sources were used in the paper - a survey conducted by the 
 researchers themselves, a general population survey, and registered voter data
-from the Brazilian government.
+from the Brazilian government. The survey was used to determine the number of 
+state services used by education level, while the registered voter data was used
+to measure turnout of registered voters.
 
 To attempt to replicate the results obtained by Cepaluni and Hidalgo, I followed
 a fairly similar data-cleaning process. I began by filtering out those who are 
@@ -399,7 +401,8 @@ ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
               formula = y ~ x, method = "loess", se = FALSE, lwd = 0.5, 
               span = 0.2, color = "black", lty = "dashed") +
   facet_wrap(~ educ) +
-  scale_y_continuous(breaks = c(-0.025, 0, 0.025, 0.05, 0.075), limits = c(-0.025, 0.08)) +
+  scale_y_continuous(breaks = c(-0.025, 0, 0.025, 0.05, 0.075), 
+                     limits = c(-0.025, 0.08)) +
   labs(title = "Change of Estimate by Bandwidth",
        y = "Estimate of Change")
 
@@ -449,7 +452,7 @@ final_6970[3,5] <- abs(round((final_6970[3,2] - final_6970[3,4])/1.96, digits = 
 
 final_6970 %>%
   kbl(caption = "CV Effect on Turnout for Age 69-70 Group") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kable_styling(latex_options = "hold_position")
 
 ```
 
@@ -516,7 +519,7 @@ final_1718[3,5] <- abs(round((final_1718[3,2] - final_1718[3,4])/1.96, digits = 
 
 final_1718 %>%
   kbl(caption = "CV Effect on Turnout for Age 17-18 Group") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kable_styling(latex_options = "hold_position")
 
 ```
 
@@ -578,6 +581,17 @@ final_6970_sex[3,5] <- abs(round((final_6970_sex[3,3] - final_6970_sex[3,4])/1.9
 
 final_6970_sex %>%
   kbl(caption = "CV Effect on Turnout for Age 69-70 Group") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kable_styling(latex_options = "hold_position")
 
 ```
+
+### Bibliography
+
+- Cepaluni, Gabriel, and F. Daniel Hidalgo. "Compulsory voting can increase 
+political inequality: Evidence from Brazil." Political Analysis (2016): 273-280.
+
+- Imbens, Guido, and Karthik Kalyanaraman. "Optimal bandwidth choice for the 
+regression discontinuity estimator." The Review of economic studies 79.3 (2012): 
+933-959.
+(Used this source less for specific methodological advice, and more to 
+understand what goes into an RD analysis.)
