@@ -8,6 +8,7 @@ output:
 ---
 
 # Replication Project - Brazil Compulsory Voting Policy Analysis
+
 #### Original Paper: Compulsory Voting Can Increase Political Inequality: Evidence from Brazil
 #### By Gabriel Cepaluni and F. Daniel Hidalgo
 
@@ -46,6 +47,42 @@ What models  did  you  use?   What  did  you  (try  to)  extend?
 What  are  the implications?
 –Think of your report as a standalone report without requiring the readers
 to be familiar with the original paper.
+
+#### Introduction
+
+The original paper I attempted to replicate is a study of Compulsory Voting (CV) 
+policies in Brazil, determining whether or not these policies achieve their 
+desired effects. Compulsory voting policies are those that aim to increase
+voter turnout by imposing financial or other penalties on those who fail to do
+so. 
+
+Cepaluni and Hidalgo's paper seeks to demonstrate that in the Brazilian
+case, where every person between the ages of 18 and 69 is legally required to 
+register and vote, such policies can actually be counterproductive in many ways. 
+One aim of Brazil's policy was to reduce the extent of 'Political Inequality',
+a phenomenon in which certain groups of people (wealthier, better educated, and
+more privileged groups) tend to vote at higher rates, acquiring disproportionate
+political influence. However, the punishment for not voting in Brazil involves 
+restricted access to state services, which survey data collected by Cepaluni and
+Hidalgo indicated are disproportionately used by more educated groups (education
+levels were used as a proxy for wealth and privilege).
+
+The researchers sought to investigate how large an effect CV policies have on 
+turnout, and how the size of this effect varies according to education levels.
+To analyze this effect, they used a Regression Discontinuity (RD) model, in 
+which levels of a variable of interest are modeled on either side of a sharp 
+threshold. This is well suited to CV policy analyses, as the CV policy has a
+strict age cutoff. Therefore, by comparing turnout between 17-yr-olds (not 
+required to vote) and 18-yr-olds (required to vote), and on the other end of
+the range, between 69-yr-olds (required to vote) and 70-yr-olds (not required
+to vote), this can reveal the causal effect of the policy. This is based off the
+assumption that individuals just above and below the threshold will be very 
+similar in most respects, and that there are not any systematic differences that
+would make a comparison invalid.
+
+To perform this analysis, they ran local linear models on either side of the
+threshold (explained in detail below)
+
 
 Do you walk us through the analysis you did for the replication?
 
