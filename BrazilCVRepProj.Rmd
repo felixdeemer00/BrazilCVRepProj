@@ -36,13 +36,6 @@ load(file = "cepaluni_hidalgo.RData")
 
 ```
 
-
-–What did you do in the replication and what can you conclude?  
-What models  did  you  use?   What  did  you  (try  to)  extend?   
-What  are  the implications?
-–Think of your report as a standalone report without requiring the readers
-to be familiar with the original paper.
-
 ### Introduction
 
 The original paper I attempted to replicate is a study of Compulsory Voting (CV) 
@@ -60,7 +53,9 @@ more privileged groups) tend to vote at higher rates, acquiring disproportionate
 political influence. However, the punishment for not voting in Brazil involves 
 restricted access to state services, which survey data collected by Cepaluni and
 Hidalgo indicated are disproportionately used by more educated groups (education
-levels were used as a proxy for wealth and privilege).
+levels were used as a proxy for wealth and privilege). This might mean, they
+thought, that the CV policy would provide a greater incentive for more highly
+educated individuals to vote, in fact increasing political inequality.
 
 The researchers sought to investigate how large an effect CV policies have on 
 turnout, and how the size of this effect varies according to education levels.
@@ -84,6 +79,8 @@ higher levels of education, with this difference being most pronounced between
 those who had completed at least primary education and those that had not. On
 this basis, they concluded that far from reducing political inequality between
 the educated and uneducated, Compulsory Voting policies in fact increased it.
+The implications of this conclusion are that Compulsory Voting policies, when
+they are implemented, should be more carefully designed to not backfire.
 
 To replicate their model, I performed a Regression Discontinuity model as well,
 although without the complex system of weighting used by theirs, instead using
@@ -93,16 +90,15 @@ analysis slightly I performed the same analysis based on sex instead of
 education. This allowed me to determine that the pattern seen in political 
 inequality due to education (did/did not) extend to sex as well.
 
-Do you walk us through the analysis you did for the replication?
-
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
-
 ### State Service Usage
 
 The research question originally carried out by Cepaluni and Hidalgo was largely
-based on the finding
+based on the survey finding that more educated individuals tend to make use of
+Brazilian state services to a far greater extent. The survey results are shown
+in the graph below. I used a t-test to determine the confidence intervals of
+the mean number of state services used. The means indicate that as education
+increases, the mean number of state services used also tends to increase, to
+a greater degree with each increased level of education.
 
 ```{r StateServiceUsage}
 
@@ -114,7 +110,8 @@ svy_data2 <- svy_data %>%
   group_by(edu_cat) %>%
   dplyr::summarize(mean = mean(num_state_services),
             lower = t.test(num_state_services)$conf.int[1],
-            upper = t.test(num_state_services)$conf.int[2])
+            upper = t.test(num_state_services)$conf.int[2],
+            .groups = "drop")
 
 ggplot(data = svy_data2,
        mapping = aes(mean, edu_cat)) +
@@ -129,6 +126,19 @@ ggplot(data = svy_data2,
 
 ### Data Cleaning
 
+Three main data sources were used in the paper - a survey conducted by the 
+researchers themselves, a general population survey, and registered voter data
+from the Brazilian government.
+
+To attempt to replicate the results obtained by Cepaluni and Hidalgo, I followed
+a fairly similar data-cleaning process. I first filtered out those who are 
+illiterate (they cannot vote and so should not be counted for the purposes of
+this analysis), and added a day-of-the-week variable used later to impute 
+missing population data. I also created a new variable 'primary_edu', which
+was a 0/1 variable type showing whether or not the individual has completed
+primary school. This was because in the original data, education was a 
+categorical variable with multiple possible string values.
+
 ```{r DataCleaning}
 
 ## Cleaning the Data
@@ -140,7 +150,7 @@ cadastro94 <- filter(cadastro94, uf != "DF", education != "Analfabeto")
 pnad0513_1942 <- filter(pnad0513_1942, uf != "DF")
 pnad0513_1994 <- filter(pnad0513_1994, uf != "DF")
 
-# Adding a weekday variable, used later in the estimate model
+# Adding a weekday variable, used later in the imputation model
 
 cadastro42$weekday <- factor(wday(cadastro42$bdate, label = TRUE), ordered = FALSE)
 cadastro42$weekday <- revalue(cadastro42$weekday, c("Thu"="Thurs", "Tue"="Tues"))
