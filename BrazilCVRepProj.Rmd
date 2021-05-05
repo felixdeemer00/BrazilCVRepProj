@@ -2,7 +2,9 @@
 title: "BrazilCVRepProj"
 author: "Felix Deemer"
 date: "5/4/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +16,8 @@ library(mgcv)
 library(lubridate)
 library(plyr)
 library(dplyr)
+library(rdrobust)
+library(rdd)
 ```
 
 ```{r Loading.RDataFile}
@@ -41,9 +45,10 @@ svy_data2 <- svy_data %>%
 
 ggplot(data = svy_data2,
        mapping = aes(mean, edu_cat)) +
-  geom_point() +
-  geom_errorbar(aes(xmin = lower, xmax = upper), width = 0) +
-  theme_bw() +
+  geom_errorbar(aes(xmin = lower, xmax = upper), width = 0, col = "darkblue",
+                lwd = 1) +
+  geom_point(size = 3) +
+  theme_get() +
   labs(y = "Education",
        x = "Mean Number of State Services Used")
 
@@ -54,9 +59,9 @@ ggplot(data = svy_data2,
 ## Cleaning the Data
 # Dropping residents of Federal district
 
-cadastro42 <- filter(cadastro42, uf != "DF")
-cadastro92 <- filter(cadastro92, uf != "DF")
-cadastro94 <- filter(cadastro94, uf != "DF")
+cadastro42 <- filter(cadastro42, uf != "DF", education != "Analfabeto")
+cadastro92 <- filter(cadastro92, uf != "DF", education != "Analfabeto")
+cadastro94 <- filter(cadastro94, uf != "DF", education != "Analfabeto")
 pnad0513_1942 <- filter(pnad0513_1942, uf != "DF")
 pnad0513_1994 <- filter(pnad0513_1994, uf != "DF")
 
@@ -139,7 +144,9 @@ demo_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu),
                                  .groups = "drop") %>%
   filter(abs(fv) <= 100) %>%
   mutate(pct_turnout = turnout/registered,
-         bin5 = round(demo_cadastro$fv/5)*5)
+         bin5 = round(fv/5)*5,
+         primary_edu = ifelse(primary_edu == 1, "Primary Education or More",
+                              "Less than Primary Education"))
 
 demo_cadastro_bin5 <- dplyr::summarize(group_by(demo_cadastro, bin5, primary_edu),
                                  turnout = sum(turnout),
@@ -148,32 +155,112 @@ demo_cadastro_bin5 <- dplyr::summarize(group_by(demo_cadastro, bin5, primary_edu
   mutate(fv = bin5,
          pct_turnout = turnout / registered)
 
-cadas_cadas_edu_loess <- loess(pct_turnout ~ fv, data = filter(demo_cadastro,
-                                                         primary_edu == 1))
-cadas_unedu_loess <- loess(pct_turnout ~ fv, data = filter(demo_cadastro,
-                                                         primary_edu == 0))
-
-demo_cadastro_loess <- data.frame(edu1 = cadas_edu_loess$fitted, 
-                                  edu0 = cadas_unedu_loess$fitted) %>%
-  mutate(fv = seq.int(nrow(demo_cadastro_loess))) %>%
-  pivot_longer(cols = c(edu1, edu0), names_to = "primary_edu") %>%
-  mutate(pct_turnout = value)
-demo_cadastro_loess$primary_edu <- ifelse(demo_cadastro_loess$primary_edu == "edu1", 1, 0)
-
 ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_point(alpha = 0.2) +
   geom_point(data = demo_cadastro_bin5) +
-  geom_smooth(data = filter(demo_cadastro, fv > 0), method = "loess", 
-              se = FALSE, span = 1.5, lwd = 1.5, col = "darkgreen") +
-  geom_smooth(data = filter(demo_cadastro, fv < 0), method = "loess", 
-              se = FALSE, span = 1.5, lwd = 1.5, col = "red") +
+  geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv > 0), 
+              method = "loess", se = FALSE, span = 2, lwd = 2, col = "darkgreen") +
+  geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
+              method = "loess", se = FALSE, span = 2, lwd = 2, col = "red") +
+  labs(title = "The Impact of Compulsory Voting on Turnout by Education",
+       subtitle = " ",
+       x = "Proximity of Birthday to Election Date (Forcing Variable)",
+       y = "Turnout (%)") +
+  annotate("text", x = 50, y = 0.89, label = "CV", col = "darkgreen", size = 5) +
+  annotate("text", x = -50, y = 0.825, label = "No CV", col = "red", size = 5) +
   facet_wrap(~ primary_edu)
   
+ggplot(demo_cadastro, aes(fv, pct_turnout)) +
+  geom_point(alpha = 0.2) +
+  geom_point(data = demo_cadastro_bin5) +
+  geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv > 0), 
+              method = "lm", se = FALSE, span = 2, lwd = 2, col = "darkgreen") +
+  geom_smooth(formula = y ~ x, data = filter(demo_cadastro, fv < 0), 
+              method = "lm", se = FALSE, span = 2, lwd = 2, col = "red") +
+  labs(title = "The Impact of Compulsory Voting on Turnout by Education",
+       subtitle = " ",
+       x = "Proximity of Birthday to Election Date (Forcing Variable)",
+       y = "Turnout (%)") +
+  annotate("text", x = 50, y = 0.89, label = "CV", col = "darkgreen", size = 5) +
+  annotate("text", x = -50, y = 0.825, label = "No CV", col = "red", size = 5) +
+  facet_wrap(~ primary_edu)
+
+```
+
+```{r CoefficientCalculation}
+
+coefcalc <- function(concadastro, bw, educ){
+  
+  cad_pos <- filter(concadastro, treat == 1, primary_edu %in% educ, 
+                    abs(fv) <= bw)
+  cad_neg <- filter(concadastro, treat == 0, primary_edu %in% educ, 
+                    abs(fv) <= bw)
+  
+  pos_fit <- lm(turnout ~ fv, data = cad_pos, weights = registered)
+  neg_fit <- lm(turnout ~ fv, data = cad_neg, weights = registered)
+  
+  return(rbind(summary(pos_fit)$coefficient, 
+               summary(neg_fit)$coefficient))
+  
+}
+
 ```
 
 ```{r 69-70CVStatus}
 
+coef_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = mean(turnout),
+                                 registered = n(),
+                                 .groups = "drop") %>%
+  filter(abs(fv) <= 365)
 
+coef_fill <- function(educvals, educ, num, coefcadastro){
+  
+  coef = data.frame(posint = rep(0,350),
+                   posse = rep(0,350),
+                   negint = rep(0,350),
+                   negse = rep(0,350),
+                   educ = rep("",350))
+  coef$Bandwidth <- seq.int(nrow(coef))
+  
+  for (i in 1:350){samp <- coefcalc(coefcadastro, i+14, educvals)
+  coef[i,1] <- samp[1]
+  coef[i,2] <- samp[1,2]
+  coef[i,3] <- samp[3]
+  coef[i,4] <- samp[3,2]
+  coef[i,5] <- educ}
+  
+  return(coef)
+  
+}
+
+coefs_full <- coef_fill(c(1,0), "Full Sample", 0, coef_cadastro)
+
+coefs_uneduc <- coef_fill(0, "Less than Primary Education", 0, coef_cadastro)
+
+coefs_educ <- coef_fill(1, "Primary Education or More", 0, coef_cadastro)
+
+coefs_comb <- rbind(coefs_full, coefs_uneduc, coefs_educ) %>%
+  mutate(diff = posint-negint,
+         max = (posint + 1.96*posse)-(negint - 1.96*negse),
+         min = (posint - 1.96*posse)-(negint + 1.96*negse)) %>%
+  select(educ, Bandwidth, diff, max, min)
+
+ggplot(data = coefs_comb, mapping = aes(y = diff, x = Bandwidth)) +
+  geom_smooth(formula = y ~ x, method = "loess", se = FALSE, lwd = 1.5, 
+              span = 0.2, color = "black") +
+  geom_smooth(mapping = aes(y = max, x = Bandwidth),
+              formula = y ~ x, method = "loess", se = FALSE, lwd = 0.5, 
+              span = 0.2, color = "black", lty = "dashed") +
+  geom_smooth(mapping = aes(y = min, x = Bandwidth),
+              formula = y ~ x, method = "loess", se = FALSE, lwd = 0.5, 
+              span = 0.2, color = "black", lty = "dashed") +
+  facet_wrap(~ educ) +
+  scale_y_continuous(breaks = c(-0.025, 0, 0.025, 0.05, 0.075), limits = c(-0.025, 0.08)) +
+  labs(title = "Change of Estimate by Bandwidth",
+       y = "Estimate of Change")
 
 ```
 
