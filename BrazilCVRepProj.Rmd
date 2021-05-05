@@ -195,11 +195,35 @@ cadastro94 <- mutate(cadastro94,
 
 ### Discontinuity Graph
 
-Do you walk us through the analysis you did for the replication?
+To begin the analysis, I attempted to recreate one of the author's graphs, which
+showed visually the difference in turnout on either side of the CV threshold. To
+do so, I summarized the election register data for the age 69-70 group (I began
+with this group for reasons discussed later) by their date of birth. 
 
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
+The proximity of their date of birth to the CV threshold is known as the 
+'forcing variable', because depending on its value, an individual has a greater 
+or lesser chance of undergoing treatment. Those with negative values of the 
+forcing variable have their 70th birthday before the election, and thus are not 
+obligated to vote as they fall outside the CV age range, while those with 
+positive values are compelled to vote. 
+
+A key assumption of the RD model is that individuals with relatively small 
+values of the forcing variable will tend to be highly similar apart from having 
+the treatment applied or not, so the causal effect can be much more clearly 
+observed. As shown by the graph below, turnout experiences a significant jump
+when the forcing variable crosses the threshold (the black dashed line, at fv = 
+0). 
+
+The key trend to observe here, however, is that while CV increases turnout 
+for both the less educated and more educated groups, the effect is much greater
+for the more educated group. Although both groups start off with a turnout of 
+around 80%, the impact of CV makes highly educated turnout visibly higher than
+less educated group turnout. 
+
+The black dots indicate the average turnout within bins of 5 days, while the
+lines are loess smoothing models used to visualize the trends of turnout on 
+each side of the threshold. This is just an exploratory graph - in later 
+sections, I quantify the exact size of the difference between the two effects.
 
 ```{r FVDiscontinuityGraph}
 ## Recreating the graph visually demonstrating the discontinuity on either side
@@ -244,7 +268,18 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
 
 ### Discontinuity Model
 
+Do you walk us through the analysis you did for the replication?
+
+Do you present the results well using tables and figures?
+Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
+(statistically and/or substantively) of the figures and tables?
+
+For the model I fitted, I used a method closer to that demonstrated by the graph
+below. For the data on either side of the threshold, I fitted a separate linear
+regression model, 
+
 ```{r ModelExplanation}
+
 ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_point(alpha = 0.2) +
   geom_point(data = demo_cadastro_bin5) +
@@ -263,12 +298,6 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
 
 ```
 
-Do you walk us through the analysis you did for the replication?
-
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
-
 ```{r CoefficientCalculation}
 
 coefcalc <- function(concadastro, bw, educ){
@@ -283,7 +312,6 @@ coefcalc <- function(concadastro, bw, educ){
   
   return(rbind(summary(pos_fit)$coefficient, 
                summary(neg_fit)$coefficient))
-  
 }
 
 ```
