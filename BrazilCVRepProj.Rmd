@@ -23,6 +23,7 @@ library(plyr)
 library(dplyr)
 library(rdrobust)
 library(rdd)
+library(kableExtra)
 ```
 
 ```{r Loading.RDataFile}
@@ -131,10 +132,9 @@ researchers themselves, a general population survey, and registered voter data
 from the Brazilian government.
 
 To attempt to replicate the results obtained by Cepaluni and Hidalgo, I followed
-a fairly similar data-cleaning process. I first filtered out those who are 
+a fairly similar data-cleaning process. I began by filtering out those who are 
 illiterate (they cannot vote and so should not be counted for the purposes of
-this analysis), and added a day-of-the-week variable used later to impute 
-missing population data. I also created a new variable 'primary_edu', which
+this analysis). I also created a new variable 'primary_edu', which
 was a 0/1 variable type showing whether or not the individual has completed
 primary school. This was because in the original data, education was a 
 categorical variable with multiple possible string values.
@@ -170,7 +170,7 @@ cadastro42 <- mutate(cadastro42,
                      secondary_edu = ifelse(education %in% 
                         c("Ensino Medio Completo", "Superior Completo", 
                         "Superior Incompleto"), 1, 0),
-                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     male = ifelse(sexo == "Feminino", 1, 0),
                      married = ifelse(marital_status == "Casado", 1, 0))
                     
 cadastro92 <- mutate(cadastro92, 
@@ -179,7 +179,7 @@ cadastro92 <- mutate(cadastro92,
                      secondary_edu = ifelse(education %in% 
                         c("Ensino Medio Completo", "Superior Completo", 
                         "Superior Incompleto"), 1, 0),
-                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     male = ifelse(sexo == "Feminino", 1, 0),
                      married = ifelse(marital_status == "Casado", 1, 0))
 
 cadastro94 <- mutate(cadastro94, 
@@ -188,7 +188,7 @@ cadastro94 <- mutate(cadastro94,
                      secondary_edu = ifelse(education %in% 
                         c("Ensino Medio Completo", "Superior Completo", 
                         "Superior Incompleto"), 1, 0),
-                     woman = ifelse(sexo == "Feminino", 1, 0),
+                     male = ifelse(sexo == "Feminino", 1, 0),
                      married = ifelse(marital_status == "Casado", 1, 0))
 
 ```
@@ -267,12 +267,6 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
 ```
 
 ### Discontinuity Model
-
-Do you walk us through the analysis you did for the replication?
-
-Do you present the results well using tables and figures?
-Do  you  explain  the  results?   i.e.,  Do  you  interpret  the  results  
-(statistically and/or substantively) of the figures and tables?
 
 For the model I fitted, I used a method closer to that demonstrated by the graph
 below. For the data on either side of the threshold, I fitted a separate linear
@@ -423,50 +417,106 @@ being investigated, so their final coefficients differed from mine.
 
 ```{r 69-70CVCoef Educ}
 
+final_6970 = data.frame(Group = c("All", "More Educated", "Less Educated"),
+                  Estimate = rep(0,3),
+                  Confidence.Interval.Min = rep(0,3),
+                  Confidence.Interval.Max = rep(0,3),
+                  Std.Error = rep(0,3))
+
 coef_6970_full <- coefcalc(coef_cadastro42, 300, c(0,1))
+final_6970[1,2] <- round(coef_6970_full[1] - coef_6970_full[3], digits = 3)
+final_6970[1,3] <- round((coef_6970_full[1] - 1.96*coef_6970_full[1,2]) -
+                   (coef_6970_full[3] + 1.96*coef_6970_full[3,2]), digits = 3)
+final_6970[1,4] <- round((coef_6970_full[1] + 1.96*coef_6970_full[1,2]) -
+                   (coef_6970_full[3] - 1.96*coef_6970_full[3,2]), digits = 3)
+final_6970[1,5] <- abs(round((final_6970[1,2] - final_6970[1,4])/1.96, digits = 4))
+
 coef_6970_educ <- coefcalc(coef_cadastro42, 300, 1)
+final_6970[2,2] <- round(coef_6970_educ[1] - coef_6970_educ[3], digits = 3)
+final_6970[2,3] <- round((coef_6970_educ[1] - 1.96*coef_6970_educ[1,2]) -
+                   (coef_6970_educ[3] + 1.96*coef_6970_educ[3,2]), digits = 3)
+final_6970[2,4] <- round((coef_6970_educ[1] + 1.96*coef_6970_educ[1,2]) -
+                   (coef_6970_educ[3] - 1.96*coef_6970_educ[3,2]), digits = 3)
+final_6970[2,5] <- abs(round((final_6970[2,2] - final_6970[2,4])/1.96, digits = 4))
+
 coef_6970_uneduc <- coefcalc(coef_cadastro42, 300, 0)
+final_6970[3,2] <- round(coef_6970_uneduc[1] - coef_6970_full[3], digits = 3)
+final_6970[3,3] <- round((coef_6970_uneduc[1] - 1.96*coef_6970_uneduc[1,2]) -
+                   (coef_6970_uneduc[3] + 1.96*coef_6970_uneduc[3,2]), digits = 3)
+final_6970[3,4] <- round((coef_6970_uneduc[1] + 1.96*coef_6970_uneduc[1,2]) -
+                   (coef_6970_uneduc[3] - 1.96*coef_6970_uneduc[3,2]), digits = 3)
+final_6970[3,5] <- abs(round((final_6970[3,2] - final_6970[3,4])/1.96, digits = 4))
 
-```
+final_6970 %>%
+  kbl(caption = "CV Effect on Turnout for Age 69-70 Group") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 
-### Unregistered Voter Estimate
-
-[Explanation of Unregistered Voter Estimate]
-
-```{r UnregisteredVoterEstimate}
-
-## Estimating voter registration shortfall
-# This function estimates the number of people born each day, according to the
-# day of the week.
-
-est_pop <- function(pnad, cadastro){
-  
-  consolidated_pnad <- dplyr::summarize(group_by(pnad, fv), 
-                                 weekday = factor(unique(weekday), ordered = FALSE),
-                                 ppl = sum(sample_weight) / 
-                                             length(unique(year)))
-  
-  pop_fit <- gam(ppl ~ weekday + s(fv), data = consolidated_pnad)
-  
-  consolidated_cadastro <- dplyr::summarize(group_by(cadastro, fv), 
-                                 treat = unique(treat),
-                                 weekday = factor(unique(weekday), ordered = FALSE),
-                                 turnout = sum(turnout),
-                                 registered = n())
-
-  consolidated_cadastro$total_est <- round(predict(pop_fit, newdata = consolidated_cadastro))
-  return(consolidated_cadastro)
-  
-  }
 ```
 
 ### Estimated CV Effect (Age 17-18 Group)
 
-[Explanation of Final 17-18 Coefficient]
+For the 17-18 year age group, I also used the bandwidth of 300 days. The
+coefficients I obtained for this section were significantly different to those
+of the authors, and with the Estimates for All and Less Educated I was
+unable to replicate the author's results. This was because the authors had
+used an additional model to impute the number of those who failed to register,
+which I was unable to replicate. As a result, the number of less educated
+individuals was significantly underestimated by my model. This has the result
+that the Estimate value for the Less Educated group is not statistically 
+significant, and the Estimate value for the Full group is disproportionately
+influenced by the More Educated group, so its values are very similar to it.
+
+Therefore, no reliable conclusion can be drawn from this group - this is partly
+due to the fact that the proportion of individuals aged 17-18 who have not 
+completed primary school but are still registered voters is extremely small
+relative to older age groups, likely reflecting improvement in educational
+access over time, making primary school more attainable for the 17-18 age group
+today than it was for those in the 69-70 age group when they were younger.
 
 ```{r 17-18CVCoef Educ}
 
+coef_cadastro94 <- dplyr::summarize(group_by(cadastro94, fv, primary_edu), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = mean(turnout),
+                                 registered = n(),
+                                 .groups = "drop") %>%
+  filter(abs(fv) <= 365)
 
+
+final_1718 = data.frame(Group = c("All", "More Educated", "Less Educated"),
+                  Estimate = rep(0,3),
+                  Confidence.Interval.Min = rep(0,3),
+                  Confidence.Interval.Max = rep(0,3),
+                  Std.Error = rep(0,3))
+
+coef_1718_full <- coefcalc(coef_cadastro94, 300, c(0,1))
+final_1718[1,2] <- round(coef_1718_full[1] - coef_1718_full[3], digits = 3)
+final_1718[1,3] <- round((coef_1718_full[1] - 1.96*coef_1718_full[1,2]) -
+                   (coef_1718_full[3] + 1.96*coef_1718_full[3,2]), digits = 3)
+final_1718[1,4] <- round((coef_1718_full[1] + 1.96*coef_1718_full[1,2]) -
+                   (coef_1718_full[3] - 1.96*coef_1718_full[3,2]), digits = 3)
+final_1718[1,5] <- abs(round((final_1718[1,2] - final_1718[1,4])/1.96, digits = 4))
+
+coef_1718_educ <- coefcalc(coef_cadastro94, 300, 1)
+final_1718[2,2] <- round(coef_1718_educ[1] - coef_1718_educ[3], digits = 3)
+final_1718[2,3] <- round((coef_1718_educ[1] - 1.96*coef_1718_educ[1,2]) -
+                   (coef_1718_educ[3] + 1.96*coef_1718_educ[3,2]), digits = 3)
+final_1718[2,4] <- round((coef_1718_educ[1] + 1.96*coef_1718_educ[1,2]) -
+                   (coef_1718_educ[3] - 1.96*coef_1718_educ[3,2]), digits = 3)
+final_1718[2,5] <- abs(round((final_1718[2,2] - final_1718[2,4])/1.96, digits = 4))
+
+coef_1718_uneduc <- coefcalc(coef_cadastro94, 300, 0)
+final_1718[3,2] <- round(coef_1718_uneduc[1] - coef_1718_uneduc[3], digits = 3)
+final_1718[3,3] <- round((coef_1718_uneduc[1] - 1.96*coef_1718_uneduc[1,2]) -
+                   (coef_1718_uneduc[3] + 1.96*coef_1718_uneduc[3,2]), digits = 3)
+final_1718[3,4] <- round((coef_1718_uneduc[1] + 1.96*coef_1718_uneduc[1,2]) -
+                   (coef_1718_uneduc[3] - 1.96*coef_1718_uneduc[3,2]), digits = 3)
+final_1718[3,5] <- abs(round((final_1718[3,2] - final_1718[3,4])/1.96, digits = 4))
+
+final_1718 %>%
+  kbl(caption = "CV Effect on Turnout for Age 17-18 Group") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 
 ```
 
@@ -474,12 +524,60 @@ est_pop <- function(pnad, cadastro){
 
 ```{r 69-70CVCoef Sex}
 
+coef_cadastro42_sex <- dplyr::summarize(group_by(cadastro42, fv, male), 
+                                 treat = unique(treat),
+                                 weekday = factor(unique(weekday), ordered = FALSE),
+                                 turnout = mean(turnout),
+                                 registered = n(),
+                                 .groups = "drop") %>%
+  filter(abs(fv) <= 365)
 
+coefcalc_sex <- function(concadastro, bw, sex){
+  
+  cad_pos <- filter(concadastro, treat == 1, male %in% sex, 
+                    abs(fv) <= bw)
+  cad_neg <- filter(concadastro, treat == 0, male %in% sex, 
+                    abs(fv) <= bw)
+  
+  pos_fit <- lm(turnout ~ fv, data = cad_pos, weights = registered)
+  neg_fit <- lm(turnout ~ fv, data = cad_neg, weights = registered)
+  
+  return(rbind(summary(pos_fit)$coefficient, 
+               summary(neg_fit)$coefficient))
+}
 
-```
+final_6970_sex = data.frame(Group = c("All", "Male", "Female"),
+                  Estimate = rep(0,3),
+                  Confidence.Interval.Min = rep(0,3),
+                  Confidence.Interval.Max = rep(0,3),
+                  Std.Error = rep(0,3))
 
-```{r 17-18CVCoef Sex}
+coef_6970_full <- coefcalc_sex(coef_cadastro42_sex, 300, c(0,1))
+final_6970_sex[1,2] <- round(coef_6970_full[1] - coef_6970_full[3], digits = 3)
+final_6970_sex[1,3] <- round((coef_6970_full[1] - 1.96*coef_6970_full[1,2]) -
+                   (coef_6970_full[3] + 1.96*coef_6970_full[3,2]), digits = 3)
+final_6970_sex[1,4] <- round((coef_6970_full[1] + 1.96*coef_6970_full[1,2]) -
+                   (coef_6970_full[3] - 1.96*coef_6970_full[3,2]), digits = 3)
+final_6970_sex[1,5] <- abs(round((final_6970_sex[1,3] - final_6970_sex[1,4])/1.96, digits = 4))
 
+coef_6970_male <- coefcalc_sex(coef_cadastro42_sex, 300, 1)
+final_6970_sex[2,2] <- round(coef_6970_male[1] - coef_6970_male[3], digits = 3)
+final_6970_sex[2,3] <- round((coef_6970_male[1] - 1.96*coef_6970_male[1,2]) -
+                   (coef_6970_male[3] + 1.96*coef_6970_male[3,2]), digits = 3)
+final_6970_sex[2,4] <- round((coef_6970_male[1] + 1.96*coef_6970_male[1,2]) -
+                   (coef_6970_male[3] - 1.96*coef_6970_male[3,2]), digits = 3)
+final_6970_sex[2,5] <- abs(round((final_6970_sex[2,3] - final_6970_sex[2,4])/1.96, digits = 4))
 
+coef_6970_female <- coefcalc_sex(coef_cadastro42_sex, 300, 0)
+final_6970_sex[3,2] <- round(coef_6970_female[1] - coef_6970_female[3], digits = 3)
+final_6970_sex[3,3] <- round((coef_6970_female[1] - 1.96*coef_6970_female[1,2]) -
+                   (coef_6970_female[3] + 1.96*coef_6970_female[3,2]), digits = 3)
+final_6970_sex[3,4] <- round((coef_6970_female[1] + 1.96*coef_6970_female[1,2]) -
+                   (coef_6970_female[3] - 1.96*coef_6970_female[3,2]), digits = 3)
+final_6970_sex[3,5] <- abs(round((final_6970_sex[3,3] - final_6970_sex[3,4])/1.96, digits = 4))
+
+final_6970_sex %>%
+  kbl(caption = "CV Effect on Turnout for Age 69-70 Group") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 
 ```
