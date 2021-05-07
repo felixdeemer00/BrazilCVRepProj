@@ -89,7 +89,9 @@ a slightly simpler linear model. Although their data seemed designed to
 investigate the effect of CV on multiple different groups, so to extent their
 analysis slightly I performed the same analysis based on sex instead of 
 education. This allowed me to determine that the pattern seen in political 
-inequality due to education (did/did not) extend to sex as well.
+inequality due to education did extend to sex as well, with Compulsory Voting
+having a larger impact on male turnout than female turnout. Exactly why this is
+the case is unclear, and deserves further investigation.
 
 ### State Service Usage
 
@@ -103,7 +105,6 @@ a greater degree with each increased level of education.
 
 ```{r StateServiceUsage}
 
-## State service usage graph
 # Creating the graph showing usage of state services, grouping by differing
 # levels of education.
 
@@ -228,9 +229,9 @@ each side of the threshold. This is just an exploratory graph - in later
 sections, I quantify the exact size of the difference between the two effects.
 
 ```{r FVDiscontinuityGraph}
-## Recreating the graph visually demonstrating the discontinuity on either side
-## of the model.
-# Creating the data for graphing the cohorts.
+
+# Creating the data for graphing the discontinuity on either side of the 
+# threshold..
 
 demo_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
                                  treat = unique(treat),
@@ -244,12 +245,21 @@ demo_cadastro <- dplyr::summarize(group_by(cadastro42, fv, primary_edu),
          primary_edu = ifelse(primary_edu == 1, "Primary Education or More",
                               "Less than Primary Education"))
 
+# An alternate version of the demo_cadastro shown above, although this one bins
+# the data into 5-day bins, making the patterns more easily visible and 
+# smoothing out the data.
+
 demo_cadastro_bin5 <- dplyr::summarize(group_by(demo_cadastro, bin5, primary_edu),
                                  turnout = sum(turnout),
                                  registered = sum(registered),
                                  .groups = "drop") %>%
   mutate(fv = bin5,
          pct_turnout = turnout / registered)
+
+# The ggplot() function for displaying the actual graph. I used a geom_smooth()
+# object in order to not have to build a separate loess model. Given that the
+# main model I used was linear, building an entire loess model seemed 
+# unnecessary.
 
 ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_point(alpha = 0.2) +
@@ -283,6 +293,10 @@ turnout.
 
 ```{r ModelExplanation}
 
+# This ggplot() also used a geom_smooth object, although a linear model this 
+# time. This graph is used as a visual demonstration of the type of model I
+# built later on, illustrating the basic RD idea used.
+
 ggplot(demo_cadastro, aes(fv, pct_turnout)) +
   geom_point(alpha = 0.2) +
   geom_point(data = demo_cadastro_bin5) +
@@ -303,6 +317,12 @@ ggplot(demo_cadastro, aes(fv, pct_turnout)) +
 ```
 
 ```{r CoefficientCalculation}
+
+# The coefcalc function was created to automatically perform the RD analysis,
+# extracting the coefficients and returning them in a form ready to be modified
+# and displayed in a table format. It runs a regression on the treated and 
+# untreated rows separately, on either side of the threshold, and returns all
+# the coefficients.
 
 coefcalc <- function(concadastro, bw, educ){
   
@@ -353,6 +373,11 @@ limited to the jump at the threshold, on the other hand.
 
 ```{r Bandwidth Chart}
 
+# The coef_cadastro42 data frame is a consolidated data frame used to create
+# the model itself. It summarizes all the individual-level data by forcing
+# variable and education level, making the final regression much easier to 
+# perform.
+
 coef_cadastro42 <- dplyr::summarize(group_by(cadastro42, fv, primary_edu), 
                                  treat = unique(treat),
                                  weekday = factor(unique(weekday), ordered = FALSE),
@@ -360,6 +385,12 @@ coef_cadastro42 <- dplyr::summarize(group_by(cadastro42, fv, primary_edu),
                                  registered = n(),
                                  .groups = "drop") %>%
   filter(abs(fv) <= 365)
+
+# I created the coef_fill() function to automate an annoying section of code
+# needed to write the coefficients produced by the coefcalc() function into 
+# the data frame used in the graph. It allows one to extract many coefficient
+# values at different bandwidths very easily, producing data ready to be
+# graphed in the bandwidth graph.
 
 coef_fill <- function(educvals, educ, num, coefcadastro){
   
@@ -386,6 +417,10 @@ coefs_full <- coef_fill(c(1,0), "Full Sample", 0, coef_cadastro42)
 coefs_uneduc <- coef_fill(0, "Less than Primary Education", 0, coef_cadastro42)
 
 coefs_educ <- coef_fill(1, "Primary Education or More", 0, coef_cadastro42)
+
+# The max and min values of the confidence interval were determined using the
+# intercept coefficients, their difference, and their respective standard
+# errors.
 
 coefs_comb <- rbind(coefs_full, coefs_uneduc, coefs_educ) %>%
   mutate(diff = posint-negint,
@@ -434,6 +469,12 @@ voting policy in fact increases political inequality.
 
 ```{r 69-70CVCoef Educ}
 
+# The final_6970 data frame holds the final coefficient calculations for each
+# of the groups. The many lines of code below in the chunk were what I used to
+# get the values formatted in the right way, making them easy to display in
+# a final table in the way I wanted. However, it involved a bit of manual work.
+# Next steps for the project will certainly involve automating this bit.
+
 final_6970 = data.frame(Group = c("All", "More Educated", "Less Educated"),
                   Estimate = rep(0,3),
                   Confidence.Interval.Min = rep(0,3),
@@ -464,6 +505,9 @@ final_6970[3,4] <- round((coef_6970_uneduc[1] + 1.96*coef_6970_uneduc[1,2]) -
                    (coef_6970_uneduc[3] - 1.96*coef_6970_uneduc[3,2]), digits = 3)
 final_6970[3,5] <- abs(round((final_6970[3,2] - final_6970[3,4])/1.96, digits = 4))
 
+# The code below creates a table, while the hold_position specification was a
+# handy option I found for anchoring the table at the right location in the pdf.
+
 final_6970 %>%
   kbl(caption = "CV Effect on Turnout for Age 69-70 Group") %>%
   kable_styling(latex_options = "hold_position")
@@ -492,6 +536,9 @@ access over time, making primary school more attainable for the 17-18 age group
 today than it was for those in the 69-70 age group when they were younger.
 
 ```{r 17-18CVCoef Educ}
+
+# This code chunk performs much the same function as the one above, although
+# using the 17-18 age group instead of the 69-70 one. 
 
 coef_cadastro94 <- dplyr::summarize(group_by(cadastro94, fv, primary_edu), 
                                  treat = unique(treat),
@@ -556,6 +603,11 @@ ranges for these values do not overlap, and both are statistically significant,
 indicating that these results are quite reliable. 
 
 ```{r 69-70CVCoef Sex}
+
+# The code below repeats many of the steps from above - ripe ground for bringing
+# in a whole bunch of functions to clean things up. Starting over with a new
+# explanatory variable, in the code's present state, requires starting over
+# and resummarizing much of the original voter roll data. 
 
 coef_cadastro42_sex <- dplyr::summarize(group_by(cadastro42, fv, male), 
                                  treat = unique(treat),
