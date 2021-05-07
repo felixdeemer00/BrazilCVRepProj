@@ -684,7 +684,10 @@ well, or by investigating interactions with other factors).
 
 A huge thanks to the original authors of the paper, Gabriel Cepaluni and F. 
 Daniel Hidalgo, for making their paper and data available online! The original
-data and code used for their paper can be found at https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/N2I9LC
+data and code used for their paper can be found here: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/N2I9LC
+
+The Github link to my code for the report can be found here: 
+https://github.com/felixdeemer00/BrazilCVRepProj
 
 ### Bibliography
 
@@ -696,3 +699,10 @@ regression discontinuity estimator." The Review of economic studies 79.3 (2012):
 933-959.
 (Used this source less for specific methodological advice, and more to 
 understand what goes into an RD analysis.)
+
+- Brieba, D., & Bunker, K. (2019). Voter Equalization and Turnout Bias After 
+Electoral Reform: Evidence from Chile’s Voluntary Voting Law. Latin American 
+Politics and Society, 61(4), 23-46. doi:10.1017/lap.2019.23 
+(The original study I was planning to replicate, that cited the Daniel/Hidalgo 
+paper and explained much of the original paper's thinking.)
+

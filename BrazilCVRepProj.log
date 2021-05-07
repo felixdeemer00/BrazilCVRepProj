@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.5)  7 MAY 2021 10:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.5)  7 MAY 2021 11:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -683,7 +683,7 @@ X warning (ext4): destination with the same identifier (name{table.3}) has been
 l.413 T
        he key limitations on the part of my replication was the failure to]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
-32.
+35.
 (/Users/felixdeemer/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [7] (./BrazilCVRepProj.aux)
@@ -705,10 +705,10 @@ Users/felixdeemer/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><
 /Users/felixdeemer/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><
 /Users/felixdeemer/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><
 /Users/felixdeemer/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb>
-Output written on BrazilCVRepProj.pdf (7 pages, 234125 bytes).
+Output written on BrazilCVRepProj.pdf (7 pages, 235131 bytes).
 PDF statistics:
- 174 PDF objects out of 1000 (max. 8388607)
- 150 compressed objects within 2 object streams
+ 177 PDF objects out of 1000 (max. 8388607)
+ 153 compressed objects within 2 object streams
  39 named destinations out of 1000 (max. 500000)
  117 words of extra memory for PDF output out of 10000 (max. 10000000)
 
